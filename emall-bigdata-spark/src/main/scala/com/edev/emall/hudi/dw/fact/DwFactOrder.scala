@@ -1,6 +1,6 @@
-package com.edev.emall.dw.fact
+package com.edev.emall.hudi.dw.fact
 
-import com.edev.emall.utils.{DataFrameUtils, PropertyFile, SparkUtils}
+import com.edev.emall.utils.{PropertyFile, SaveConf, SaveUtils, SparkUtils}
 
 object DwFactOrder {
   def main(args: Array[String]): Unit = {
@@ -10,6 +10,10 @@ object DwFactOrder {
     val data = spark.sql("select id, getDateKey(order_time) date_id, customer_id, address_id, region_id, " +
       "status, amount, order_time, modify_time, payment_method, payment_status, payment_time " +
       "from emall_etl.etl_order").repartition(num)
-    DataFrameUtils.saveOverwrite(data, "emall_dw", "dw_fact_order")
+    SaveUtils.saveWithPartition(data, SaveConf.build()
+      .option("tableName","hudi_dw.dw_fact_order")
+      .option("primaryKeyField","id")
+      .option("timestampField","order_time")
+      .option("partitionField","date_id"))
   }
 }

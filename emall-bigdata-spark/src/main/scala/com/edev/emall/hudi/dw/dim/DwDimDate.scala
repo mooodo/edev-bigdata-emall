@@ -1,6 +1,7 @@
-package com.edev.emall.dw.dim
+package com.edev.emall.hudi.dw.dim
 
-import com.edev.emall.utils.{DataFrameUtils, DateUtils, SparkUtils}
+import com.edev.emall.utils.{DateUtils, HudiConf, HudiUtils, SparkUtils}
+import org.apache.hudi.DataSourceWriteOptions.{RECORDKEY_FIELD, TABLE_TYPE}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 
@@ -37,6 +38,9 @@ object DwDimDate {
     ))
     val result = sc.parallelize(rows)
     val data = spark.createDataFrame(result, schema)
-    DataFrameUtils.saveOverwrite(data, "emall_dw", "dw_dim_date")
+    HudiUtils.saveAppend(data, "hudi_dw", "dw_dim_date",
+      HudiConf.build()
+        .option(RECORDKEY_FIELD.key(), "id")
+        .option(TABLE_TYPE.key(), "COPY_ON_WRITE"))
   }
 }

@@ -1,6 +1,6 @@
-package com.edev.emall.dw.agg
+package com.edev.emall.hudi.dw.agg
 
-import com.edev.emall.utils.{DataFrameUtils, DateUtils, PropertyFile, SparkUtils}
+import com.edev.emall.utils._
 
 object DwAggOrderItemProduct {
   def main(args: Array[String]): Unit = {
@@ -10,6 +10,10 @@ object DwAggOrderItemProduct {
     val data = spark.sql("select date_id, customer_id, product_id, count(*) cnt, " +
       "sum(amount) amount,  getTimestamp(date_id) ts " +
       "from emall_dw.dw_fact_order_item group by date_id, customer_id, product_id").repartition(num)
-    DataFrameUtils.saveOverwrite(data, "emall_dw", "dw_agg_order_item_product")
+    SaveUtils.saveWithPartition(data, SaveConf.build()
+      .option("tableName","hudi_dw.dw_agg_order_item_product")
+      .option("primaryKeyField","date_id,customer_id,product_id")
+      .option("timestampField","ts")
+      .option("partitionField","date_id"))
   }
 }

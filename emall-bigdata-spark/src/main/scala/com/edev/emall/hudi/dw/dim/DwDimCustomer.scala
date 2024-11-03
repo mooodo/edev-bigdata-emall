@@ -1,6 +1,7 @@
-package com.edev.emall.dw.dim
+package com.edev.emall.hudi.dw.dim
 
-import com.edev.emall.utils.{DataFrameUtils, PropertyFile, SparkUtils}
+import com.edev.emall.utils.{HudiConf, HudiUtils, PropertyFile, SparkUtils}
+import org.apache.hudi.DataSourceWriteOptions.{RECORDKEY_FIELD, TABLE_TYPE}
 
 object DwDimCustomer {
   def main(args: Array[String]): Unit = {
@@ -8,6 +9,9 @@ object DwDimCustomer {
     val spark = SparkUtils.init("dw_dim_customer")
     val data = spark.sql("select id, name, gender, identification, birthdate, " +
       "email, phone_number, create_time, modify_time from emall_etl.etl_customer").repartition(num)
-    DataFrameUtils.saveOverwrite(data, "emall_dw", "dw_dim_customer")
+    HudiUtils.saveAppend(data, "hudi_dw", "dw_dim_customer",
+      HudiConf.build()
+        .option(RECORDKEY_FIELD.key(), "id")
+        .option(TABLE_TYPE.key(), "COPY_ON_WRITE"))
   }
 }

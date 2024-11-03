@@ -1,6 +1,6 @@
-package com.edev.emall.dw.agg
+package com.edev.emall.hudi.dw.agg
 
-import com.edev.emall.utils.{DataFrameUtils, DateUtils, PropertyFile, SparkUtils}
+import com.edev.emall.utils._
 
 object DwAggOrderRegion {
   def main(args: Array[String]): Unit = {
@@ -10,6 +10,10 @@ object DwAggOrderRegion {
     val data = spark.sql("select date_id, region_id, count(*) cnt, sum(amount) amount, " +
       "getTimestamp(date_id) ts " +
       "from emall_dw.dw_fact_order group by date_id, region_id").repartition(num)
-    DataFrameUtils.saveOverwrite(data, "emall_dw", "dw_agg_order_region")
+    SaveUtils.saveWithPartition(data, SaveConf.build()
+      .option("tableName","hudi_dw.dw_agg_order_region")
+      .option("primaryKeyField","date_id,region_id")
+      .option("timestampField","ts")
+      .option("partitionField","date_id"))
   }
 }
